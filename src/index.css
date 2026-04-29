@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Твои кастомные стили, если нужны */
+body {
+  margin: 0;
+  background-color: #08080a;
+}
