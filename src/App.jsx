@@ -116,6 +116,42 @@ export default function App() {
     await updateDoc(taskRef, data);
   };
 
+  const handleUpdateDate = (taskId, newDate) => {
+    setTasks(prev => prev.map(task =>
+      task.id === taskId ? { ...task, dueDate: newDate } : task
+    ));
+  };
+
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+
+    // Если бросили мимо или туда же, где и было — ничего не делаем
+    if (!destination || destination.droppableId === source.droppableId) return;
+
+    const taskId = draggableId;
+    const newDateStr = destination.droppableId; // Это наш date.toDateString() из Droppable
+
+    // 1. Оптимистичное обновление UI (чтобы задача мгновенно прыгнула в новый день)
+    // Это делается через локальный стейт, чтобы юзер не ждал ответа от БД
+    setTasks(prevTasks => prevTasks.map(t =>
+      t.id === taskId ? { ...t, dueDate: new Date(newDateStr).toISOString() } : t
+    ));
+
+    try {
+      // 2. Обновление в Firebase
+      // Мы используем твою готовую функцию updateTask
+      await updateTask(taskId, {
+        dueDate: new Date(newDateStr).toISOString() // сохраняем как ISO строку
+        // или если используешь Firebase Timestamps:
+        // dueDate: Timestamp.fromDate(new Date(newDateStr))
+      });
+      console.log("Дата задачи обновлена в Firebase");
+    } catch (error) {
+      console.error("Ошибка при обновлении задачи:", error);
+      // Тут можно откатить изменения в стейте, если запрос не прошел
+    }
+  };
+
   // Shortcut ⌘K
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -178,7 +214,7 @@ export default function App() {
           )}
 
           {activeTab === 'calendar' && (
-            <FullCalendar tasks={tasks} />
+            <FullCalendar tasks={tasks} onUpdateTaskDate={handleUpdateDate} onDragEnd={onDragEnd} />
           )}
 
           {/* Здесь можно добавить заглушки для других вкладок */}
