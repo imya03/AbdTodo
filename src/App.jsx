@@ -133,7 +133,7 @@ export default function App() {
       <BackgroundGlow />
 
       {/* Основной интерфейс */}
-      <div className="flex h-screen p-4 md:p-6 gap-4 md:gap-6 relative z-10">
+      <div className="flex h-screen px-0 py-4 md:p-6 gap-0 md:gap-6 relative z-10 w-full">
 
         {/* Боковая панель навигации */}
         <aside className="hidden sm:flex w-20 flex-col gap-8 items-center py-8">
