@@ -5,7 +5,7 @@ import { GlassCard } from '../ui/GlassCard';
 import { createPortal } from 'react-dom';
 
 
-export const FullCalendar = ({ tasks = [], onToggle, onUpdateTaskDate, onDragEnd }) => {
+export const FullCalendar = ({ tasks = [], tagColors, onToggle, onUpdateTaskDate, onDragEnd }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const monthData = useMemo(() => {
@@ -79,6 +79,7 @@ export const FullCalendar = ({ tasks = [], onToggle, onUpdateTaskDate, onDragEnd
                                     onToggle={onToggle}
                                     isLastColumn={(index + 1) % 7 === 0}
                                     isToday={date?.toDateString() === new Date().toDateString()}
+                                    tagColors={tagColors}
                                 />
                             );
                         })}
@@ -94,8 +95,18 @@ const DraggablePortal = ({ children }) => {
     return createPortal(children, document.body);
 };
 
-const CalendarCell = ({ id, date, tasks, onToggle, isLastColumn, isToday }) => {
+
+
+const CalendarCell = ({ id, date, tasks, onToggle, isLastColumn, isToday, tagColors }) => {
     if (!date) return <div className={`border-b border-white/5 bg-black/10 ${isLastColumn ? '' : 'border-r'}`} />;
+
+    // Находим цвет для задачи: берем первый попавшийся тег, у которого настроен цвет
+    const getTaskColor = (task) => {
+        if (!task.tags || task.tags.length === 0) return '#a855f7'; // Цвет по умолчанию
+        const firstTagWithColor = task.tags.find(tag => tagColors[tag]);
+        return tagColors[firstTagWithColor] || '#a855f7';
+    };
+
 
     return (
         <Droppable droppableId={id}>
@@ -134,7 +145,7 @@ const CalendarCell = ({ id, date, tasks, onToggle, isLastColumn, isToday }) => {
                                             {/* Цветная полоска (индикатор тега) */}
                                             <div
                                                 className="w-[3px] h-3 rounded-full mr-1 flex-shrink-0"
-                                                style={{ backgroundColor: task.color || '#a855f7' }}
+                                                style={{ backgroundColor: getTaskColor(task) }}
                                             />
 
                                             {/* Чекбокс (скрыт на мобилках) */}

@@ -2,34 +2,36 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { auth, db, appId } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signInAnonymously, signInWithCustomToken, signOut } from 'firebase/auth';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  serverTimestamp, 
-  query, 
-  orderBy, 
-  onSnapshot, 
-  where 
+import {
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  onSnapshot,
+  where
 } from 'firebase/firestore';
 
 // Импорты компонентов
-import { 
-  Layout, 
-  Search, 
-  Calendar as CalendarIcon, 
-  Settings, 
-  Command, 
-  Plus, 
-  LogOut 
+import {
+  Layout,
+  Search,
+  Calendar as CalendarIcon,
+  Settings,
+  Command,
+  Plus,
+  LogOut
 } from 'lucide-react';
 import { TaskList } from './components/Task/TaskList';
 import { RightSidebar } from './components/layout/RightSidebar';
 import { CommandBar } from './components/CommandBar/CommandBar';
 import { FullCalendar } from './components/calendar/FullCalendar';
 import { AuthPage } from './components/Auth/AuthPage'; // Убедитесь, что путь верный
+import { SettingsPage } from './components/Settings/SettingsPage';
 
 // --- Главный компонент App ---
 export default function App() {
@@ -77,14 +79,14 @@ function Dashboard({ user }) {
   // Слушатель Firestore с фильтрацией по userId
   useEffect(() => {
     if (!user) return;
-    
+
     // Запрашиваем только задачи текущего пользователя
     const tasksQuery = query(
-      collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), 
+      collection(db, 'artifacts', appId, 'public', 'data', 'tasks'),
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
-    
+
     const unsubscribe = onSnapshot(tasksQuery, (snapshot) => {
       setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => {
@@ -139,9 +141,9 @@ function Dashboard({ user }) {
     if (!destination || destination.droppableId === source.droppableId) return;
 
     const newDateStr = destination.droppableId;
-    
+
     // Оптимистичное обновление UI
-    setTasks(prev => prev.map(t => 
+    setTasks(prev => prev.map(t =>
       t.id === draggableId ? { ...t, dueDate: new Date(newDateStr).toISOString() } : t
     ));
 
@@ -162,6 +164,35 @@ function Dashboard({ user }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+
+
+
+  const [tagColors, setTagColors] = useState({});
+
+  // Загрузка цветов тегов из БД
+  useEffect(() => {
+    if (!user) return;
+    const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', user.uid);
+
+    const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setTagColors(docSnap.data().tagColors || {});
+      }
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  // Функция сохранения цвета для тега
+  const updateTagColor = async (tagName, color) => {
+    const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', user.uid);
+    await setDoc(settingsRef, {
+      tagColors: {
+        ...tagColors,
+        [tagName]: color
+      }
+    }, { merge: true });
+  };
+
   const handleLogout = () => signOut(auth);
 
   return (
@@ -171,13 +202,13 @@ function Dashboard({ user }) {
       <div className="flex h-screen px-0 py-4 md:p-6 gap-0 md:gap-6 relative z-10 w-full">
         {/* Боковая панель */}
         <aside className="hidden sm:flex w-20 flex-col gap-8 items-center py-8">
-          <div 
-            onClick={() => setActiveTab('tasks')} 
+          <div
+            onClick={() => setActiveTab('tasks')}
             className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 cursor-pointer transition-transform active:scale-95"
           >
             <Command size={24} />
           </div>
-          
+
           <nav className="flex flex-col gap-6">
             {[
               { id: 'tasks', icon: Layout },
@@ -188,18 +219,17 @@ function Dashboard({ user }) {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`p-3 rounded-2xl transition-all ${
-                  activeTab === item.id 
-                    ? 'text-white bg-white/10 shadow-inner' 
-                    : 'text-white/40 hover:text-white hover:bg-white/5'
-                }`}
+                className={`p-3 rounded-2xl transition-all ${activeTab === item.id
+                  ? 'text-white bg-white/10 shadow-inner'
+                  : 'text-white/40 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 <item.icon size={24} />
               </button>
             ))}
           </nav>
 
-          <button 
+          <button
             onClick={handleLogout}
             className="mt-auto p-3 text-white/20 hover:text-red-400 transition-colors"
             title="Выйти"
@@ -211,24 +241,33 @@ function Dashboard({ user }) {
         {/* Контент */}
         <main className="flex-1 flex flex-col gap-6 w-full overflow-hidden">
           {activeTab === 'tasks' && (
-            <TaskList 
-              tasks={tasks} 
-              onToggle={toggleTask} 
-              onDelete={deleteTask} 
-              onUpdate={updateTask} 
-              onOpenCommand={() => setIsCommandBarOpen(true)} 
+            <TaskList
+              tasks={tasks}
+              onToggle={toggleTask}
+              onDelete={deleteTask}
+              onUpdate={updateTask}
+              onOpenCommand={() => setIsCommandBarOpen(true)}
             />
           )}
           {activeTab === 'calendar' && (
-            <FullCalendar 
-              tasks={tasks} 
-              onUpdateTaskDate={updateTask} 
-              onDragEnd={onDragEnd} 
-              onToggle={toggleTask} 
+            <FullCalendar
+              tasks={tasks}
+              tagColors={tagColors} // Передаем объект с цветами
+              onUpdateTaskDate={updateTask}
+              onDragEnd={onDragEnd}
+              onToggle={toggleTask}
             />
           )}
           {activeTab === 'search' && <div className="text-white/20 p-8">Поиск (в разработке)</div>}
-          {activeTab === 'settings' && <div className="text-white/20 p-8">Настройки (в разработке)</div>}
+
+
+          {activeTab === 'settings' && (
+            <SettingsPage
+              tasks={tasks}
+              tagColors={tagColors}
+              onUpdateTagColor={updateTagColor}
+            />
+          )}
         </main>
 
         <div className="hidden xl:flex w-72 flex-col">
@@ -236,12 +275,12 @@ function Dashboard({ user }) {
         </div>
       </div>
 
-      <CommandBar 
-        isOpen={isCommandBarOpen} 
-        onClose={() => setIsCommandBarOpen(false)} 
-        value={newTaskInput} 
-        onChange={setNewTaskInput} 
-        onAdd={addTask} 
+      <CommandBar
+        isOpen={isCommandBarOpen}
+        onClose={() => setIsCommandBarOpen(false)}
+        value={newTaskInput}
+        onChange={setNewTaskInput}
+        onAdd={addTask}
       />
 
       {/* Мобильная навигация */}
