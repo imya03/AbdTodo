@@ -24,6 +24,7 @@ import {
   Settings,
   Command,
   Plus,
+  KanbanSquare,
   LogOut
 } from 'lucide-react';
 import { TaskList } from './components/Task/TaskList';
@@ -32,6 +33,7 @@ import { CommandBar } from './components/CommandBar/CommandBar';
 import { FullCalendar } from './components/calendar/FullCalendar';
 import { AuthPage } from './components/Auth/AuthPage'; // Убедитесь, что путь верный
 import { SettingsPage } from './components/Settings/SettingsPage';
+import { KanbanBoard } from './components/KanbanBoard/KanbanBoard';
 
 // --- Главный компонент App ---
 export default function App() {
@@ -111,6 +113,7 @@ function Dashboard({ user }) {
         tags,
         dueDate,
         userId: user.uid, // Привязка к пользователю
+        position: 0,
         createdAt: serverTimestamp()
       });
       setNewTaskInput("");
@@ -199,7 +202,7 @@ function Dashboard({ user }) {
     <div className="min-h-screen bg-[#08080a] text-white font-sans selection:bg-purple-500/30 overflow-hidden relative">
       <BackgroundGlow />
 
-      <div className="flex h-screen px-0 py-4 md:p-6 gap-0 md:gap-6 relative z-10 w-full">
+      <div className="flex h-screen px-0 py-4 md:p-3 gap-0 md:gap-3 relative z-10 w-full">
         {/* Боковая панель */}
         <aside className="hidden sm:flex w-20 flex-col gap-8 items-center py-8">
           <div
@@ -211,7 +214,7 @@ function Dashboard({ user }) {
 
           <nav className="flex flex-col gap-6">
             {[
-              { id: 'tasks', icon: Layout },
+              { id: 'tasks', icon: KanbanSquare },
               { id: 'search', icon: Search },
               { id: 'calendar', icon: CalendarIcon },
               { id: 'settings', icon: Settings }
@@ -239,13 +242,13 @@ function Dashboard({ user }) {
         </aside>
 
         {/* Контент */}
-        <main className="flex-1 flex flex-col gap-6 w-full overflow-hidden">
+        <main className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
           {activeTab === 'tasks' && (
-            <TaskList
+            <KanbanBoard
               tasks={tasks}
-              onToggle={toggleTask}
+              onToggle={toggleTask} // Когда кликаем чекбокс — улетает в Done
               onDelete={deleteTask}
-              onUpdate={updateTask}
+              onUpdate={updateTask} // Через это можно менять поле status: 'in-progress' и т.д.
               onOpenCommand={() => setIsCommandBarOpen(true)}
             />
           )}

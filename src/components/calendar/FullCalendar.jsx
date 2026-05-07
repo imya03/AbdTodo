@@ -124,7 +124,7 @@ const CalendarCell = ({ id, date, tasks, onToggle, isLastColumn, isToday, tagCol
                         </span>
                     </div>
 
-                    <div className="flex flex-col px-0.5 gap-[1px] flex-1">
+                    <div className="flex flex-col px-0.5 flex-1">
                         {tasks.slice(0, 5).map((task, index) => (
                             <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                                 {(provided, snapshot) => {
@@ -133,10 +133,11 @@ const CalendarCell = ({ id, date, tasks, onToggle, isLastColumn, isToday, tagCol
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
                                             {...provided.dragHandleProps}
-                                            onClick={() => onToggle?.(task)}
+
                                             style={{
                                                 ...provided.draggableProps.style,
                                                 // Если перетаскиваем, фиксируем указатель
+                                                marginBottom: '1px',
                                                 cursor: snapshot.isDragging ? 'grabbing' : 'pointer'
                                             }}
                                             className={`group flex items-center h-[18px] px-1 rounded-sm transition-all ${snapshot.isDragging ? 'z-[9999] shadow-2xl bg-[#1a1a1a] border border-white/10' : ''
@@ -149,12 +150,14 @@ const CalendarCell = ({ id, date, tasks, onToggle, isLastColumn, isToday, tagCol
                                             />
 
                                             {/* Чекбокс (скрыт на мобилках) */}
-                                            <div className={`hidden sm:flex flex-shrink-0 w-3 h-3 rounded-[3px] border border-white/20 items-center justify-center mr-1 transition-colors ${task.completed ? 'bg-emerald-500 border-emerald-500' : 'group-hover:border-white/40'
-                                                }`}>
+                                            <div
+                                                onClick={() => onToggle?.(task)}
+                                                className={`hidden sm:flex flex-shrink-0 w-3 h-3 rounded-[3px] border border-white/20 items-center justify-center mr-1 transition-colors ${task.completed ? 'bg-emerald-500 border-emerald-500' : 'group-hover:border-white/40'
+                                                    }`}>
                                                 {task.completed && <Check size={8} className="text-[#08080a] stroke-[4px]" />}
                                             </div>
 
-                                            <span className={`text-[11px] leading-none whitespace-nowrap overflow-hidden flex-1 ${task.completed ? 'line-through text-white/20' : 'text-white/80'
+                                            <span className={`text-[12px] leading-none whitespace-nowrap overflow-hidden flex-1 ${task.completed ? 'line-through text-white/20' : 'text-white/80'
                                                 }`}>
                                                 {task.title}
                                             </span>

@@ -5,3 +5,24 @@ body {
   margin: 0;
   background-color: #08080a;
 }
+
+
+[data-rbd-draggable-context-id] {
+  will-change: transform;
+}
+
+
+/* Этот класс библиотека вешает на элементы, которые должны раздвинуться */
+[data-rbd-draggable-context-id] {
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Фикс для самого placeholder (пустого места) */
+[data-rbd-placeholder-context-id] {
+  transition: height 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+  background: rgba(255, 255, 255, 0.03);
+  /* Опционально: подсветить место падения */
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
