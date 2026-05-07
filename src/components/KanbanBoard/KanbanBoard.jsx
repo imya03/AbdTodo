@@ -3,7 +3,7 @@ import { Layout, MoreHorizontal, Plus } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { TaskItem } from '../Task/TaskItem';
 
-export const KanbanBoard = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand }) => {
+export const KanbanBoard = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand, tagColors }) => {
     // 1. Локальное состояние для мгновенной реакции
     const [localTasks, setLocalTasks] = useState(tasks);
 
@@ -136,6 +136,7 @@ export const KanbanBoard = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand
                                                                 onToggle={onToggle}
                                                                 onDelete={onDelete}
                                                                 onUpdate={onUpdate}
+                                                                tagColors={tagColors}
                                                             />
                                                         </div>
                                                     </div>

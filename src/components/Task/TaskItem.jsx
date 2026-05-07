@@ -6,11 +6,12 @@ import React, { memo } from 'react';
 
 
 
-const TaskItemComponent = forwardRef(({ task, onToggle, onDelete, onUpdate }, ref) => {
+const TaskItemComponent = forwardRef(({ task, onToggle, onDelete, onUpdate, tagColors }, ref) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDate, setEditDate] = useState(task.dueDate ? task.dueDate.split('T')[0] : "");
   const [editTags, setEditTags] = useState(task.tags ? task.tags.join(', ') : "");
+
 
   const handleSave = () => {
     const tagsArray = editTags.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(tag => tag !== "");
@@ -55,11 +56,22 @@ const TaskItemComponent = forwardRef(({ task, onToggle, onDelete, onUpdate }, re
             )}
 
             <div className="flex flex-wrap gap-2 mt-1">
-              {task.tags?.map(tag => (
-                <span key={tag} className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
-                  #{tag}
-                </span>
-              ))}
+              {task.tags?.map(tag => {
+                // Получаем цвет конкретно для этого тега из словаря tagColors
+                // Если цвета нет, используем дефолтный (например, фиолетовый)
+                const currentTagColor = tagColors[tag] || '#a855f7';
+
+                return (
+                  <span
+                    key={tag}
+                    style={{ borderColor: currentTagColor }}
+                    className="border-b-2 opacity-70 text-[10px] px-1 py-0.5 text-white/90"
+                  >
+                    #{tag}
+                  </span>
+                );
+              })}
+
               {task.dueDate && (
                 <span className="text-[10px] bg-white/5 text-white/40 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <CalendarIcon size={10} />

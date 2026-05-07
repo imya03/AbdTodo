@@ -246,6 +246,7 @@ function Dashboard({ user }) {
           {activeTab === 'tasks' && (
             <KanbanBoard
               tasks={tasks}
+              tagColors={tagColors}
               onToggle={toggleTask} // Когда кликаем чекбокс — улетает в Done
               onDelete={deleteTask}
               onUpdate={updateTask} // Через это можно менять поле status: 'in-progress' и т.д.
