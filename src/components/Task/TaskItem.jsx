@@ -27,7 +27,7 @@ const TaskItemComponent = forwardRef(({ task, onToggle, onDelete, onUpdate, tagC
     <motion.div
       ref={ref}
       layout
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 1, y: 0, scale: 1 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
     >

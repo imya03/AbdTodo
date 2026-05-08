@@ -27,6 +27,8 @@ import {
   KanbanSquare,
   LogOut
 } from 'lucide-react';
+
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { TaskList } from './components/Task/TaskList';
 import { RightSidebar } from './components/layout/RightSidebar';
 import { CommandBar } from './components/CommandBar/CommandBar';
@@ -38,6 +40,7 @@ import { KanbanBoard } from './components/KanbanBoard/KanbanBoard';
 // --- Главный компонент App ---
 export default function App() {
   const [user, loading] = useAuthState(auth);
+
 
   // Инициализация Auth (вызывается всегда)
   useEffect(() => {
@@ -77,6 +80,25 @@ function Dashboard({ user }) {
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
   const [newTaskInput, setNewTaskInput] = useState("");
   const [activeTab, setActiveTab] = useState('tasks');
+  const [activeCalendarDate, setActiveCalendarDate] = useState(null);
+
+
+  // Drag & Drop в календаре
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination || destination.droppableId === source.droppableId) return;
+
+    const newDateStr = destination.droppableId;
+
+    // Оптимистичное обновление UI
+    setTasks(prev => prev.map(t =>
+      t.id === draggableId ? { ...t, dueDate: new Date(newDateStr).toISOString() } : t
+    ));
+
+    await updateTask(draggableId, {
+      dueDate: new Date(newDateStr).toISOString()
+    });
+  };
 
   // Слушатель Firestore с фильтрацией по userId
   useEffect(() => {
@@ -138,21 +160,73 @@ function Dashboard({ user }) {
     await updateDoc(taskRef, data);
   };
 
+
+
+
   // Drag & Drop в календаре
-  const onDragEnd = async (result) => {
+  const handleGlobalDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
-    if (!destination || destination.droppableId === source.droppableId) return;
 
-    const newDateStr = destination.droppableId;
+    // 1. Если бросили мимо или ничего не изменилось — выходим
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    // Оптимистичное обновление UI
+    // 2. СЦЕНАРИЙ: Календарь (бросок на правый сайдбар)
+    if (destination.droppableId === 'calendar-main-zone') {
+      if (activeCalendarDate) {
+        await updateTask(draggableId, { dueDate: activeCalendarDate });
+      }
+      return;
+    }
+
+    // 3. СЦЕНАРИЙ: Канбан (перемещение между колонками или внутри одной)
+    const newStatus = destination.droppableId; // 'todo', 'in-progress' или 'done'
+    const isCompleted = newStatus === 'done';
+    const isSameColumn = source.droppableId === destination.droppableId;
+
+    // Получаем и сортируем задачи целевой колонки для расчета позиции
+    let columnTasks = tasks
+      .filter(t => {
+        if (newStatus === 'done') return t.completed === true;
+        if (newStatus === 'todo') return !t.completed && (t.status === 'todo' || !t.status);
+        return !t.completed && t.status === newStatus;
+      })
+      .sort((a, b) => (a.position || 0) - (b.position || 0));
+
+    // Если двигаем внутри той же колонки, исключаем саму задачу из списка для точности
+    if (isSameColumn) {
+      columnTasks = columnTasks.filter(t => t.id !== draggableId);
+    }
+
+    // Расчет новой позиции (чтобы сохранить порядок)
+    let newPosition;
+    if (columnTasks.length === 0) {
+      newPosition = 1000;
+    } else if (destination.index === 0) {
+      newPosition = (columnTasks[0].position || 0) - 1000;
+    } else if (destination.index >= columnTasks.length) {
+      newPosition = (columnTasks[columnTasks.length - 1].position || 0) + 1000;
+    } else {
+      const prev = columnTasks[destination.index - 1].position || 0;
+      const next = columnTasks[destination.index].position || 0;
+      newPosition = (prev + next) / 2;
+    }
+
+    // 4. ОБНОВЛЕНИЕ
+    // Формируем объект данных для Firestore
+    const updateData = {
+      status: newStatus,
+      completed: isCompleted,
+      position: newPosition
+    };
+
+    // Оптимистично обновляем локальный стейт (чтобы не ждать ответа базы)
     setTasks(prev => prev.map(t =>
-      t.id === draggableId ? { ...t, dueDate: new Date(newDateStr).toISOString() } : t
+      t.id === draggableId ? { ...t, ...updateData } : t
     ));
 
-    await updateTask(draggableId, {
-      dueDate: new Date(newDateStr).toISOString()
-    });
+    // Отправляем в Firebase
+    await updateTask(draggableId, updateData);
   };
 
   // Hotkeys ⌘K
@@ -195,6 +269,18 @@ function Dashboard({ user }) {
       }
     }, { merge: true });
   };
+
+
+  const [isOverCalendar, setIsOverCalendar] = useState(false);
+
+  const handleDragUpdate = (update) => {
+    if (update.destination?.droppableId.startsWith('calendar-')) {
+      setIsOverCalendar(true);
+    } else {
+      setIsOverCalendar(false);
+    }
+  };
+
 
   const handleLogout = () => signOut(auth);
 
@@ -241,42 +327,48 @@ function Dashboard({ user }) {
           </button>
         </aside>
 
-        {/* Контент */}
-        <main className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
-          {activeTab === 'tasks' && (
-            <KanbanBoard
-              tasks={tasks}
-              tagColors={tagColors}
-              onToggle={toggleTask} // Когда кликаем чекбокс — улетает в Done
-              onDelete={deleteTask}
-              onUpdate={updateTask} // Через это можно менять поле status: 'in-progress' и т.д.
-              onOpenCommand={() => setIsCommandBarOpen(true)}
-            />
-          )}
-          {activeTab === 'calendar' && (
-            <FullCalendar
-              tasks={tasks}
-              tagColors={tagColors} // Передаем объект с цветами
-              onUpdateTaskDate={updateTask}
-              onDragEnd={onDragEnd}
-              onToggle={toggleTask}
-            />
-          )}
-          {activeTab === 'search' && <div className="text-white/20 p-8">Поиск (в разработке)</div>}
+
+        <DragDropContext onDragEnd={handleGlobalDragEnd}>
+          {/* Контент */}
+          <main className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
+            {activeTab === 'tasks' && (
+              <KanbanBoard
+                tasks={tasks}
+                tagColors={tagColors}
+                onToggle={toggleTask} // Когда кликаем чекбокс — улетает в Done
+                onDelete={deleteTask}
+                onUpdate={updateTask} // Через это можно менять поле status: 'in-progress' и т.д.
+                onOpenCommand={() => setIsCommandBarOpen(true)}
+                isOverCalendar={isOverCalendar}
+                activeCalendarDate={activeCalendarDate}
+              />
+            )}
+            {activeTab === 'calendar' && (
+              <FullCalendar
+                tasks={tasks}
+                tagColors={tagColors} // Передаем объект с цветами
+                onUpdateTaskDate={updateTask}
+                onDragEnd={onDragEnd}
+                onToggle={toggleTask}
+              />
+            )}
+            {activeTab === 'search' && <div className="text-white/20 p-8">Поиск (в разработке)</div>}
 
 
-          {activeTab === 'settings' && (
-            <SettingsPage
-              tasks={tasks}
-              tagColors={tagColors}
-              onUpdateTagColor={updateTagColor}
-            />
-          )}
-        </main>
+            {activeTab === 'settings' && (
+              <SettingsPage
+                tasks={tasks}
+                tagColors={tagColors}
+                onUpdateTagColor={updateTagColor}
+              />
+            )}
+          </main>
 
-        <div className="hidden xl:flex w-72 flex-col">
-          <RightSidebar tasks={tasks} />
-        </div>
+          <div className="hidden xl:flex w-72 flex-col">
+            <RightSidebar tasks={tasks} tagColors={tagColors} onHoverDate={setActiveCalendarDate} />
+          </div>
+        </DragDropContext>
+
       </div>
 
       <CommandBar
