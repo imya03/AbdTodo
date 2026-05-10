@@ -21,7 +21,7 @@ export const RightSidebar = ({ tasks = [], tagColors, onHoverDate }) => {
   return (
     <aside className="w-72 flex flex-col gap-6">
       <StatsWidget tasks={tasks} />
-      <MiniCalendar tasks={tasks} onHoverDate={onHoverDate}/>
+      <MiniCalendar tasks={tasks} onHoverDate={onHoverDate} />
 
       <GlassCard className="p-5 flex-1 flex flex-col min-h-[500px]">
         <div className="flex items-center justify-between mb-4">
@@ -38,10 +38,11 @@ export const RightSidebar = ({ tasks = [], tagColors, onHoverDate }) => {
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
           {todayTasks.length > 0 ? (
             todayTasks.map(task => (
-                <TaskItem
-                  task={task}
-                  tagColors={tagColors}
-                />
+              <TaskItem
+                key={task.id}
+                task={task}
+                tagColors={tagColors}
+              />
             ))
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">

@@ -352,7 +352,12 @@ function Dashboard({ user }) {
                 onToggle={toggleTask}
               />
             )}
-            {activeTab === 'search' && <div className="text-white/20 p-8">Поиск (в разработке)</div>}
+            {activeTab === 'search' && <div className="text-white/20 p-8">
+              <TaskList
+                tasks={tasks}
+                tagColors={tagColors}
+              />
+            </div>}
 
 
             {activeTab === 'settings' && (
