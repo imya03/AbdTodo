@@ -18,13 +18,12 @@ import {
 
 // Импорты компонентов
 import {
-  Layout,
-  Search,
   Calendar as CalendarIcon,
   Settings,
   Command,
-  Plus,
-  KanbanSquare,
+  LayoutDashboard,
+  CalendarDays,
+  ListTodo,
   LogOut
 } from 'lucide-react';
 
@@ -36,6 +35,8 @@ import { FullCalendar } from './components/calendar/FullCalendar';
 import { AuthPage } from './components/Auth/AuthPage'; // Убедитесь, что путь верный
 import { SettingsPage } from './components/Settings/SettingsPage';
 import { KanbanBoard } from './components/KanbanBoard/KanbanBoard';
+import { MobileNav } from './components/Nav/MobileNav';
+
 
 // --- Главный компонент App ---
 export default function App() {
@@ -79,7 +80,7 @@ function Dashboard({ user }) {
   const [tasks, setTasks] = useState([]);
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
   const [newTaskInput, setNewTaskInput] = useState("");
-  const [activeTab, setActiveTab] = useState('tasks');
+  const [activeTab, setActiveTab] = useState('list');
   const [activeCalendarDate, setActiveCalendarDate] = useState(null);
 
 
@@ -288,11 +289,11 @@ function Dashboard({ user }) {
     <div className="min-h-screen bg-[#08080a] text-white font-sans selection:bg-purple-500/30 overflow-hidden relative">
       <BackgroundGlow />
 
-      <div className="flex h-screen px-0 py-4 md:p-3 gap-0 md:gap-3 relative z-10 w-full">
+      <div className="flex h-screen px-0 py-4 md:p-3 gap-0 md:gap-3 relative z-10 w-full pb-28 md:pb-0">
         {/* Боковая панель */}
-        <aside className="hidden sm:flex w-20 flex-col gap-8 items-center py-8">
+        <aside className="hidden md:flex w-20 flex-col gap-8 items-center py-8">
           <div
-            onClick={() => setActiveTab('tasks')}
+            onClick={() => setActiveTab('kanban')}
             className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 cursor-pointer transition-transform active:scale-95"
           >
             <Command size={24} />
@@ -300,9 +301,9 @@ function Dashboard({ user }) {
 
           <nav className="flex flex-col gap-6">
             {[
-              { id: 'tasks', icon: KanbanSquare },
-              { id: 'search', icon: Search },
-              { id: 'calendar', icon: CalendarIcon },
+              { id: 'kanban', icon: LayoutDashboard },
+              { id: 'list', icon: ListTodo },
+              { id: 'calendar', icon: CalendarDays },
               { id: 'settings', icon: Settings }
             ].map((item) => (
               <button
@@ -330,8 +331,8 @@ function Dashboard({ user }) {
 
         <DragDropContext onDragEnd={handleGlobalDragEnd}>
           {/* Контент */}
-          <main className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
-            {activeTab === 'tasks' && (
+          <main className="flex-1 flex flex-col min-h-0 w-full overflow-scroll">
+            {activeTab === 'kanban' && (
               <KanbanBoard
                 tasks={tasks}
                 tagColors={tagColors}
@@ -352,10 +353,11 @@ function Dashboard({ user }) {
                 onToggle={toggleTask}
               />
             )}
-            {activeTab === 'search' && <div className="text-white/20 p-8">
+            {activeTab === 'list' && <div className="text-white/20 p-8">
               <TaskList
                 tasks={tasks}
                 tagColors={tagColors}
+                onOpenCommand={() => setIsCommandBarOpen(true)}
               />
             </div>}
 
@@ -385,7 +387,7 @@ function Dashboard({ user }) {
       />
 
       {/* Мобильная навигация */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-[#121215]/80 backdrop-blur-lg border-t border-white/10 flex justify-around p-4 z-50">
+      {/* <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-[#121215]/80 backdrop-blur-lg border-t border-white/10 flex justify-around p-4 z-50">
         <button onClick={() => setActiveTab('tasks')} className={activeTab === 'tasks' ? 'text-purple-500' : 'text-white/40'}>
           <Layout size={24} />
         </button>
@@ -398,7 +400,13 @@ function Dashboard({ user }) {
         <button onClick={handleLogout} className="text-white/20">
           <LogOut size={24} />
         </button>
-      </div>
+      </div> */}
+      {/* Мобильная навигация из референса 1000117199.png */}
+      <MobileNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenCommand={() => setIsCommandBarOpen(true)}
+      />
     </div>
   );
 }

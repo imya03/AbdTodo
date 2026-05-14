@@ -59,7 +59,7 @@ export const TaskList = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand, t
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const todayTime = now.getTime();
-    
+
     const tom = new Date(now);
     tom.setDate(tom.getDate() + 1);
     const tomorrowTime = tom.getTime();
@@ -86,9 +86,9 @@ export const TaskList = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand, t
           // Если задача вчерашняя, но ВЫПОЛНЕННАЯ, 
           // и мы её не скрыли фильтром, отправим её в "Сегодня" (как завершенную)
           // или просто проигнорируем в этом списке, чтобы не путать
-          groups.today.push(task); 
+          groups.today.push(task);
         }
-      } 
+      }
       // 4. Остальные распределения
       else if (taskTime === todayTime) {
         groups.today.push(task);
@@ -107,35 +107,27 @@ export const TaskList = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand, t
   }, [tasks, hideCompleted]);
 
   return (
-    <main className="flex-1 flex flex-col gap-6">
-      <header className="flex justify-between items-end px-1">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent">
-            Расписание
-          </h1>
-          <p className="text-white/40 font-medium">Ваши задачи по приоритету времени</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
+    <main className="flex-1 flex flex-col gap-1">
+      <header className="flex justify-end items-end px-1">
+        <div className="flex items-center gap-5">
           {/* Кнопка фильтра */}
           <button
             onClick={() => setHideCompleted(!hideCompleted)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-xs font-medium ${
-              hideCompleted 
-              ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' 
-              : 'bg-white/5 border-white/10 text-white/40 hover:text-white/60'
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-xs font-medium ${hideCompleted
+                ? 'bg-white/5 border-white/10 text-white/40 hover:text-white/60'
+                : 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+              }`}
           >
             {hideCompleted ? <EyeOff size={14} /> : <Eye size={14} />}
-            {hideCompleted ? "Скрыты выполненные" : "Показать все"}
+            {hideCompleted ? "Невыполненные" : "Все"}
           </button>
 
           <button
             onClick={onOpenCommand}
-            className="bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-3 text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-white/70"
+            className="hidden md:flex bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-3 text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-white/70"
           >
-            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">⌘K</kbd>
-            <span>Действие</span>
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">+</kbd>
+            <span>Добавить</span>
           </button>
         </div>
       </header>
@@ -148,11 +140,11 @@ export const TaskList = ({ tasks, onToggle, onDelete, onUpdate, onOpenCommand, t
           </div>
         ) : (
           <>
-            <TaskGroup title="Просрочено" tasks={groupedTasks.overdue} {...{onToggle, onDelete, onUpdate, tagColors}} />
-            <TaskGroup title="Сегодня" tasks={groupedTasks.today} {...{onToggle, onDelete, onUpdate, tagColors}} />
-            <TaskGroup title="Завтра" tasks={groupedTasks.tomorrow} {...{onToggle, onDelete, onUpdate, tagColors}} />
-            <TaskGroup title="Предстоящие" tasks={groupedTasks.upcoming} {...{onToggle, onDelete, onUpdate, tagColors}} defaultOpen={false} />
-            <TaskGroup title="Без даты" tasks={groupedTasks.noDate} {...{onToggle, onDelete, onUpdate, tagColors}} defaultOpen={false} />
+            <TaskGroup title="Просрочено" tasks={groupedTasks.overdue} {...{ onToggle, onDelete, onUpdate, tagColors }} />
+            <TaskGroup title="Сегодня" tasks={groupedTasks.today} {...{ onToggle, onDelete, onUpdate, tagColors }} />
+            <TaskGroup title="Завтра" tasks={groupedTasks.tomorrow} {...{ onToggle, onDelete, onUpdate, tagColors }} />
+            <TaskGroup title="Предстоящие" tasks={groupedTasks.upcoming} {...{ onToggle, onDelete, onUpdate, tagColors }} defaultOpen={false} />
+            <TaskGroup title="Без даты" tasks={groupedTasks.noDate} {...{ onToggle, onDelete, onUpdate, tagColors }} defaultOpen={false} />
           </>
         )}
       </div>
